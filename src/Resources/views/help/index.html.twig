@@ -1,0 +1,76 @@
+<div class="panel">
+    <div class="panel-hdr">
+        <div class="panel-toolbar align-self-end">
+            <ul id="help-contents-tabs" class="nav nav-tabs border-bottom-0 link-tabs" role="tablist">
+                {% set active = true %}
+                {% for locale, subSystems in helpContents %}
+                    {% for subSystem, headings in subSystems %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if active %} active {% endif %}" data-toggle="tab" href="#{{ locale ~ subSystem }}" role="tab">
+                                {{ locale|upper }} - {{ subSystem|capitalize }}
+                            </a>
+                            {% set active = false %}
+                        </li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="panel-container show">
+        <div class="tab-content p-3">
+            {% set active = true %}
+            {% for locale, subSystems in helpContents %}
+                {% for subSystem, headings in subSystems %}
+                    <div class="tab-pane fade show {% if active %} active {% endif %}" id="{{ locale ~ subSystem }}" role="tabpanel">
+                        {% set active = false %}
+                        <table class="entity-table table table-bordered table-hover table-striped w-100">
+                            <thead>
+                            <tr>
+                                <th class="text-center w-25">{{ routes|default('Routes') }}</th>
+                                <th class="text-center">{{ heading|default('Heading') }}</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for heading, helpContentItem in headings %}
+                                <tr>
+                                    <td class="text-center">{{ helpContentItem['routes']|join('<br>')|raw }}</td>
+                                    <td>{{ heading }}</td>
+                                    <td class="text-center">
+                                    <span data-toggle="modal" data-target="#content-{{ locale ~ subSystem }}-{{ loop.index }}">
+                                        <button title="{{ preview|default('Preview') }}" data-toggle="tooltip" data-trigger="hover" class="btn btn-sm btn-info">
+                                            <i class="far fa-eye"></i>
+                                        </button>
+                                    </span>
+                                        <div class="modal fade" id="content-{{ locale ~ subSystem }}-{{ loop.index }}" tabindex="-1"
+                                             role="dialog"
+                                             aria-hidden="true">
+                                            <div class="modal-dialog modal-xl" role="document">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h4 class="modal-title">
+                                                            {{ heading }}
+                                                        </h4>
+                                                    </div>
+                                                    <div class="modal-body text-left">
+                                                        {{ helpContentItem['content']|raw }}
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button class="btn btn-default" data-dismiss="modal">
+                                                            <i class="far fa-times"></i> {{ cancel|default('Cancel') }}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+</div>

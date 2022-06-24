@@ -1,0 +1,25 @@
+{
+    "name": "codific/google-docs-help-bundle",
+    "description": "Build HTML elements from Google Docs",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Codific\\GoogleDocsHelpBundle\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Zlatomir Haralambov",
+            "email": "zlatomir@codific.eu"
+        }
+    ],
+    "require": {
+        "php": "^8.0",
+        "google/apiclient": "^2.0",
+        "symfony/cache": "^6.1",
+        "symfony/config": "^6.1",
+        "symfony/dependency-injection": "^6.1",
+        "symfony/http-kernel": "^6.1"
+    }
+}
