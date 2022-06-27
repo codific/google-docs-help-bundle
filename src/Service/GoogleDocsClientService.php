@@ -111,8 +111,12 @@ class GoogleDocsClientService
                 /* @var $inlineObject InlineObject */
                 foreach ($documentObject['document']->getInlineObjects() as $imageId => $inlineObject) {
                     if ($inlineObject->getInlineObjectProperties()?->getEmbeddedObject()?->getImageProperties()?->getContentUri() !== null) {
+                        $uri = $inlineObject->getInlineObjectProperties()?->getEmbeddedObject()?->getImageProperties()?->getContentUri();
+                        $type = pathinfo($uri, PATHINFO_EXTENSION);
+                        $data = file_get_contents($uri);
+                        $imageInBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
                         $this->images[$locale][$imageId] = [
-                            'uri' => $inlineObject->getInlineObjectProperties()?->getEmbeddedObject()?->getImageProperties()?->getContentUri(),
+                            'data' => $imageInBase64,
                             // if multiplication is skipped, the images appear too small
                             'width' => $inlineObject->getInlineObjectProperties()?->getEmbeddedObject()?->getSize()->getWidth()->getMagnitude() * 1.5,
                             'height' => $inlineObject->getInlineObjectProperties()?->getEmbeddedObject()?->getSize()->getHeight()->getMagnitude() * 1.5,
@@ -278,7 +282,7 @@ class GoogleDocsClientService
     {
         $image = $this->images[$locale][$element?->getInlineObjectElement()?->getInlineObjectId()];
         $alignment = $this->getImageAlignmentStyle($structuralElement);
-        $this->currentHelpContent .= "<img src='{$image['uri']}' width='{$image['width']}' height='{$image['height']}' referrerPolicy='no-referrer' style='{$alignment}'  />";
+        $this->currentHelpContent .= "<img src='{$image['data']}' width='{$image['width']}' height='{$image['height']}' referrerPolicy='no-referrer' style='{$alignment}'  />";
     }
 
     /**
