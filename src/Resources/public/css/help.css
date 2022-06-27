@@ -1,0 +1,9 @@
+mark[data-markjs='true'].current-marked {
+    background: orange;
+    color: black;
+}
+
+mark[data-markjs='true'] {
+    background: yellow;
+    padding: 0;
+}
