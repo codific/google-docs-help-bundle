@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services
+        https://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <service id="codific_google_docs_help.service.google_docs_client_service" class="Codific\GoogleDocsHelpBundle\Service\GoogleDocsClientService" public="true">
+            <argument key="$redisCache" type="service" id=".redis.cache.taggable" />
+        </service>
+
+        <service id="Codific\GoogleDocsHelpBundle\Service\GoogleDocsClientService" alias="codific_google_docs_help.service.google_docs_client_service" public="false" />
+    </services>
+</container>
