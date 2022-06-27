@@ -42,10 +42,10 @@ class GoogleDocsClientService
      * ]
      */
     private array $helpContent = [];
-    private array $warnings = [];
     private string $redisTag = 'google_docs_help';
     private string $currentHelpContent = '';
     private array $listItems = [];
+    private array $errors = [];
 
     /**
      * GoogleDocsClientService's constructor
@@ -89,10 +89,19 @@ class GoogleDocsClientService
      */
     private function loadDocuments(): void
     {
-        $service = new Docs($this->googleClient);
-        foreach ($this->documentIds as $locale => $documents) {
-            foreach ($documents as $system => $documentId) {
-                $this->documentObjects[$locale][$system] = ['documentId' => $documentId, 'document' => $service->documents->get($documentId, ['suggestionsViewMode' => 'SUGGESTIONS_INLINE'])];
+        try {
+            $service = new Docs($this->googleClient);
+            foreach ($this->documentIds as $locale => $documents) {
+                foreach ($documents as $system => $documentId) {
+                    $this->documentObjects[$locale][$system] = ['documentId' => $documentId, 'document' => $service->documents->get($documentId, ['suggestionsViewMode' => 'SUGGESTIONS_INLINE'])];
+                }
+            }
+        }
+        catch (\Throwable $exception) {
+            if (str_contains($exception->getMessage(), 'permission')) {
+                $this->errors[] = "You do not have permission to access the document";
+            } else {
+                $this->errors[] = $exception->getMessage();
             }
         }
     }
@@ -493,7 +502,7 @@ class GoogleDocsClientService
             $item->tag($this->redisTag);
             $item->expiresAfter(3600); // 1 hour
             if (!$this->enabled) {
-                return [];
+                return [[], []];
             }
             $this->loadDocumentIds();
             $this->loadClient();
@@ -501,7 +510,7 @@ class GoogleDocsClientService
             $this->extractHeadings();
             $this->extractImages();
             $this->buildHelpStructure();
-            return $this->helpContent;
+            return [$this->errors, $this->helpContent];
         });
     }
 
@@ -516,18 +525,20 @@ class GoogleDocsClientService
      */
     public function getHelpContentForRoute(string $locale, string $routeName, string $subSystem): array
     {
-        $helpContents = $this->getParsedDocs();
-        return $helpContents[$locale][$subSystem][$routeName] ?? [];
+        [$errors, $helpContents] = $this->getParsedDocs();
+        return [$errors, $helpContents[$locale][$subSystem][$routeName] ?? []];
     }
 
     /**
      * Returns all help contents
+     * @param bool $showWarnings
      * @return array
      * @throws \Google\Exception
      */
-    public function getAllHelpContentsByHeading(): array
+    public function getAllHelpContentsByHeading(bool $showWarnings = true): array
     {
-        $allHelpContents = $this->getParsedDocs();
+        [$errors, $allHelpContents] = $this->getParsedDocs();
+        $errors = $showWarnings ? $errors : [];
         $result = [];
         foreach ($allHelpContents as $locale => $helpContents) {
             foreach ($helpContents as $subSystem => $routes) {
@@ -540,7 +551,7 @@ class GoogleDocsClientService
                 }
             }
         }
-        return $result;
+        return [$errors, $result];
     }
 
     /**
