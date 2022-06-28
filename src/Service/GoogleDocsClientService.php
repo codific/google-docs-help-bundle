@@ -500,7 +500,7 @@ class GoogleDocsClientService
     {
         return $this->redisCache->get($this->redisTag, function (ItemInterface $item) {
             $item->tag($this->redisTag);
-            $item->expiresAfter(3600); // 1 hour
+            $item->expiresAfter(null); // stored permanently or for as long as the implementation allows
             if (!$this->enabled) {
                 return [[], []];
             }
