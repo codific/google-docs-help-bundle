@@ -190,10 +190,10 @@ class GoogleDocsClientService
                             if ($elementText || $endWithNewLine) {
                                 $addToContent = true;
                                 if (
-                                    $isEndOfDocumentReached && isset($this->headings[$documentObject['document']->getDocumentId()][$currentHeading]) ||
+                                    $isEndOfDocumentReached && isset($this->headings[$locale][$documentObject['document']->getDocumentId()][$currentHeading]) ||
                                     (
                                         $currentHeading != $elementText
-                                        && isset($this->headings[$documentObject['document']->getDocumentId()][$elementText])
+                                        && isset($this->headings[$locale][$documentObject['document']->getDocumentId()][$elementText])
                                         && str_starts_with($element->getParagraph()?->getParagraphStyle()?->getNamedStyleType() ?? '', 'HEADING_')
                                     )
                                 ) {
