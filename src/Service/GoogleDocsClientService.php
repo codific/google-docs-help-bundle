@@ -171,6 +171,8 @@ class GoogleDocsClientService
                 $currentHeading = '';
                 /* @var $element StructuralElement */
                 foreach ($elements as $element) {
+                    $isEndOfDocumentReached = $elementArrayIndex === array_key_last($elements);
+
                     if ($element->getTable() && $currentHeading) {
                         $this->addTableToHelpContent($element->getTable());
                     }
@@ -188,9 +190,13 @@ class GoogleDocsClientService
                             if ($elementText || $endWithNewLine) {
                                 $addToContent = true;
                                 if (
-                                    $currentHeading != $elementText
-                                    && isset($this->headings[$locale][$documentObject['document']->getDocumentId()][$elementText])
-                                    && str_starts_with($element->getParagraph()?->getParagraphStyle()?->getNamedStyleType() ?? '', 'HEADING_')) {
+                                    $isEndOfDocumentReached && isset($this->headings[$locale][$documentObject['document']->getDocumentId()][$currentHeading]) ||
+                                    (
+                                        $currentHeading != $elementText
+                                        && isset($this->headings[$locale][$documentObject['document']->getDocumentId()][$elementText])
+                                        && str_starts_with($element->getParagraph()?->getParagraphStyle()?->getNamedStyleType() ?? '', 'HEADING_')
+                                    )
+                                ) {
                                     if (!empty($currentHeading)) {
                                         $routes = $this->getRoutesForHeading($locale, $documentObject['document']->getDocumentId(), $currentHeading);
                                         foreach ($routes as $route) {
