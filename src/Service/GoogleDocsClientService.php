@@ -170,7 +170,7 @@ class GoogleDocsClientService
                 $elements = $documentObject['document']->getBody()->getContent();
                 $currentHeading = '';
                 /* @var $element StructuralElement */
-                foreach ($elements as $element) {
+                foreach ($elements as $elementArrayIndex => $element) {
                     $isEndOfDocumentReached = $elementArrayIndex === array_key_last($elements);
 
                     if ($element->getTable() && $currentHeading) {
