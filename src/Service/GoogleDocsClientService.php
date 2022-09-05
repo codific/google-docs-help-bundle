@@ -198,6 +198,9 @@ class GoogleDocsClientService
                                     )
                                 ) {
                                     if (!empty($currentHeading)) {
+                                        if (!empty($this->listItems)) {
+                                            $this->appendListItemsToHelpContent();
+                                        }
                                         $routes = $this->getRoutesForHeading($locale, $documentObject['document']->getDocumentId(), $currentHeading);
                                         foreach ($routes as $route) {
                                             if (str_starts_with($route, $system)) {
