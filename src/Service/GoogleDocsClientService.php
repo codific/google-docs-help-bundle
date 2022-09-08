@@ -359,7 +359,7 @@ class GoogleDocsClientService
         $currentItem = $this->listItems[$lastItemIndex] ?? '';
         $currentItem .= $this->getSpecialStyling($elementText, $paragraphElement);
         $this->listItems[$lastItemIndex] = $currentItem;
-        if ($endsWithNewLine) {
+        if ($endsWithNewLine && ($elementText || $this->currentHelpContent)) {
             // the previous list item has come to an end,
             // creating the next list item index in the array
             $this->listItems[$lastItemIndex + 1] = '';
