@@ -337,7 +337,7 @@ class GoogleDocsClientService
         }
         $elementText = $this->getSpecialStyling($elementText, $paragraphElement, $structuralElement);
         $textToAppend = nl2br($elementText);
-        if ($endsWithNewLine) {
+        if ($endsWithNewLine && ($elementText || $this->currentHelpContent)) {
             $textToAppend .= '<br/>';
         }
         $this->currentHelpContent .= $textToAppend;
@@ -359,7 +359,7 @@ class GoogleDocsClientService
         $currentItem = $this->listItems[$lastItemIndex] ?? '';
         $currentItem .= $this->getSpecialStyling($elementText, $paragraphElement);
         $this->listItems[$lastItemIndex] = $currentItem;
-        if ($endsWithNewLine && ($elementText || $this->currentHelpContent)) {
+        if ($endsWithNewLine) {
             // the previous list item has come to an end,
             // creating the next list item index in the array
             $this->listItems[$lastItemIndex + 1] = '';
