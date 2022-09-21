@@ -123,13 +123,15 @@ class GoogleDocsClientService
                         $uri = $inlineObject->getInlineObjectProperties()?->getEmbeddedObject()?->getImageProperties()?->getContentUri();
                         $type = pathinfo($uri, PATHINFO_EXTENSION);
                         $data = file_get_contents($uri);
-                        $imageInBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
-                        $this->images[$locale][$imageId] = [
-                            'data' => $imageInBase64,
-                            // if multiplication is skipped, the images appear too small
-                            'width' => $inlineObject->getInlineObjectProperties()?->getEmbeddedObject()?->getSize()->getWidth()->getMagnitude() * 1.5,
-                            'height' => $inlineObject->getInlineObjectProperties()?->getEmbeddedObject()?->getSize()->getHeight()->getMagnitude() * 1.5,
-                        ];
+                        if ($data) {
+                            $imageInBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                            $this->images[$locale][$imageId] = [
+                                'data' => $imageInBase64,
+                                // if multiplication is skipped, the images appear too small
+                                'width' => $inlineObject->getInlineObjectProperties()?->getEmbeddedObject()?->getSize()->getWidth()->getMagnitude() * 1.5,
+                                'height' => $inlineObject->getInlineObjectProperties()?->getEmbeddedObject()?->getSize()->getHeight()->getMagnitude() * 1.5,
+                            ];
+                        }
                     }
                 }
             }
