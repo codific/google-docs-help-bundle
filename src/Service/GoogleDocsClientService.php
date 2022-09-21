@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Codific\GoogleDocsHelpBundle\Service;
@@ -50,9 +51,9 @@ class GoogleDocsClientService
     /**
      * GoogleDocsClientService's constructor
      * @param TagAwareCacheInterface $redisCache
-     * @param bool $enabled
-     * @param array $credentials
-     * @param array $documents
+     * @param bool                   $enabled
+     * @param array                  $credentials
+     * @param array                  $documents
      */
     public function __construct(
         private TagAwareCacheInterface $redisCache,
@@ -96,8 +97,7 @@ class GoogleDocsClientService
                     $this->documentObjects[$locale][$system] = ['documentId' => $documentId, 'document' => $service->documents->get($documentId, ['suggestionsViewMode' => 'SUGGESTIONS_INLINE'])];
                 }
             }
-        }
-        catch (\Throwable $exception) {
+        } catch (\Throwable $exception) {
             if (str_contains($exception->getMessage(), 'permission')) {
                 $this->errors[] = "You do not have permission to access the document";
             } else {
@@ -114,22 +114,23 @@ class GoogleDocsClientService
      */
     private function extractImages(): void
     {
-        /* @var $documentObject Document */
         foreach ($this->documentObjects as $locale => $documentObjects) {
             foreach ($documentObjects as $documentObject) {
-                /* @var $inlineObject InlineObject */
+                /* @var $documentObject array{ documentId: string, document: Document} */
                 foreach ($documentObject['document']->getInlineObjects() as $imageId => $inlineObject) {
                     if ($inlineObject->getInlineObjectProperties()?->getEmbeddedObject()?->getImageProperties()?->getContentUri() !== null) {
                         $uri = $inlineObject->getInlineObjectProperties()?->getEmbeddedObject()?->getImageProperties()?->getContentUri();
                         $type = pathinfo($uri, PATHINFO_EXTENSION);
                         $data = file_get_contents($uri);
-                        $imageInBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
-                        $this->images[$locale][$imageId] = [
-                            'data' => $imageInBase64,
-                            // if multiplication is skipped, the images appear too small
-                            'width' => $inlineObject->getInlineObjectProperties()?->getEmbeddedObject()?->getSize()->getWidth()->getMagnitude() * 1.5,
-                            'height' => $inlineObject->getInlineObjectProperties()?->getEmbeddedObject()?->getSize()->getHeight()->getMagnitude() * 1.5,
-                        ];
+                        if ($data) {
+                            $imageInBase64 = 'data:image/'.$type.';base64,'.base64_encode($data);
+                            $this->images[$locale][$imageId] = [
+                                'data' => $imageInBase64,
+                                // if multiplication is skipped, the images appear too small
+                                'width' => $inlineObject->getInlineObjectProperties()->getEmbeddedObject()->getSize()->getWidth()->getMagnitude() * 1.5,
+                                'height' => $inlineObject->getInlineObjectProperties()->getEmbeddedObject()->getSize()->getHeight()->getMagnitude() * 1.5,
+                            ];
+                        }
                     }
                 }
             }
@@ -177,11 +178,14 @@ class GoogleDocsClientService
                         $this->addTableToHelpContent($element->getTable());
                     }
                     foreach ($element->getParagraph()?->getElements() ?? [] as $el) {
-                        if ($el->getTextRun()?->getSuggestedInsertionIds() || $el?->getTextRun()?->getSuggestedDeletionIds() || $el?->getTextRun()?->getSuggestedTextStyleChanges()) {
+                        if ($el === []) {
                             continue;
                         }
-                        if ($el?->getInlineObjectElement()?->getInlineObjectId() !== null &&
-                            isset($this->images[$locale][$el?->getInlineObjectElement()?->getInlineObjectId()])) { // it's an image
+                        if ($el->getTextRun()?->getSuggestedInsertionIds() || $el->getTextRun()?->getSuggestedDeletionIds() || $el->getTextRun()?->getSuggestedTextStyleChanges()) {
+                            continue;
+                        }
+                        if ($el->getInlineObjectElement()?->getInlineObjectId() !== null &&
+                            isset($this->images[$locale][$el->getInlineObjectElement()?->getInlineObjectId()])) { // it's an image
                             $this->closeOpenedListItems($element);
                             $this->addImageToHelpContent($locale, $el, $element);
                         } else { // it's a text element - heading or normal paragraph
@@ -256,8 +260,10 @@ class GoogleDocsClientService
             $red = $rgbColor->getRed() * 255;
             $green = $rgbColor->getGreen() * 255;
             $blue = $rgbColor->getBlue() * 255;
+
             return "rgb({$red}, {$green}, {$blue})";
         }
+
         return 'rgb(255, 255, 255)'; // white
     }
 
@@ -273,6 +279,7 @@ class GoogleDocsClientService
             $element = $tableCell->getContent()[0]->getParagraph()->getElements()[0];
             $cellText = $this->getSpecialStyling(trim($element->getTextRun()->getContent()), $element);
         }
+
         return $cellText;
     }
 
@@ -291,8 +298,8 @@ class GoogleDocsClientService
 
     /**
      * Adds an image to the current help content
-     * @param string $locale
-     * @param ParagraphElement $element
+     * @param string            $locale
+     * @param ParagraphElement  $element
      * @param StructuralElement $structuralElement
      * @return void
      */
@@ -311,6 +318,7 @@ class GoogleDocsClientService
     private function getImageAlignmentStyle(StructuralElement $structuralElement): string
     {
         $alignment = $structuralElement->getParagraph()?->getParagraphStyle()?->getAlignment();
+
         return match ($alignment) {
             'CENTER' => 'display: block; margin: auto; text-align: center;',
             default => ""
@@ -319,9 +327,9 @@ class GoogleDocsClientService
 
     /**
      * Adds the current element text to the current help content
-     * @param string $elementText
-     * @param bool $endsWithNewLine
-     * @param ParagraphElement $paragraphElement
+     * @param string            $elementText
+     * @param bool              $endsWithNewLine
+     * @param ParagraphElement  $paragraphElement
      * @param StructuralElement $structuralElement
      * @return void
      */
@@ -329,6 +337,7 @@ class GoogleDocsClientService
     {
         if ($structuralElement->getParagraph()?->getBullet()?->getListId() !== null) {
             $this->addListItem($elementText, $endsWithNewLine, $paragraphElement);
+
             return; // we don't want to add the element text twice
         } else {
             if (!empty($this->listItems)) {
@@ -348,8 +357,8 @@ class GoogleDocsClientService
      * Since list items may come in multiple tokens,
      * we need to append to the previous list item until
      * an item with a new line at the end is reached
-     * @param string $elementText
-     * @param bool $endsWithNewLine
+     * @param string           $elementText
+     * @param bool             $endsWithNewLine
      * @param ParagraphElement $paragraphElement
      * @return void
      */
@@ -375,7 +384,7 @@ class GoogleDocsClientService
     private function getElementText(ParagraphElement $element): array
     {
         $content = $element?->getTextRun()?->getContent();
-        if($element?->getTextRun()?->getTextStyle()?->getLink()?->getUrl()!=null) {
+        if ($element?->getTextRun()?->getTextStyle()?->getLink()?->getUrl() != null) {
             $content = "<a href='".$element?->getTextRun()?->getTextStyle()?->getLink()?->getUrl()."' target='_blank'>$content</a>";
         }
         if (is_null($content)) {
@@ -385,13 +394,14 @@ class GoogleDocsClientService
         if (str_ends_with($content, "\n")) {
             return [$trimmedContent, true];
         }
+
         return [$trimmedContent, false];
     }
 
     /**
      * Applies the special styling for the element (if such) to the element text
-     * @param string $elementText
-     * @param ParagraphElement $element
+     * @param string                 $elementText
+     * @param ParagraphElement       $element
      * @param StructuralElement|null $structuralElement
      * @return string
      */
@@ -410,12 +420,13 @@ class GoogleDocsClientService
         if ($element->getTextRun()?->getTextStyle()?->getStrikethrough() === true) {
             $result = "<s>{$result}</s>";
         }
+
         return $this->getTextElementAlignmentWrapper($result, $structuralElement);
     }
 
     /**
      * Wraps the text with a span and adds styling to move it horizontally to the center/end of the screen
-     * @param string $text
+     * @param string                 $text
      * @param StructuralElement|null $structuralElement
      * @return string
      */
@@ -458,7 +469,8 @@ class GoogleDocsClientService
                                                 fn($element) => trim($element),
                                                 explode(',', $elementText)
                                             ),
-                                            fn($element) => strlen($element) > 0)
+                                            fn($element) => strlen($element) > 0
+                                        )
                                     );
                                     foreach ($routes as $routeName) {
                                         $this->commentsByRoute[$locale][$documentId][$routeName][$currentHeadingText] = $currentHeadingText;
@@ -496,6 +508,7 @@ class GoogleDocsClientService
                 }
             }
         }
+
         return $routes;
     }
 
@@ -519,6 +532,7 @@ class GoogleDocsClientService
             $this->extractHeadings();
             $this->extractImages();
             $this->buildHelpStructure();
+
             return [$this->errors, $this->helpContent];
         });
     }
@@ -535,6 +549,7 @@ class GoogleDocsClientService
     public function getHelpContentForRoute(string $locale, string $routeName, string $subSystem): array
     {
         [$errors, $helpContents] = $this->getParsedDocs();
+
         return [$errors, $helpContents[$locale][$subSystem][$routeName] ?? []];
     }
 
@@ -560,6 +575,7 @@ class GoogleDocsClientService
                 }
             }
         }
+
         return [$errors, $result];
     }
 

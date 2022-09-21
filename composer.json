@@ -21,5 +21,46 @@
         "symfony/config": "6.*.*",
         "symfony/dependency-injection": "6.*.*",
         "symfony/http-kernel": "6.*.*"
+    },
+    "require-dev": {
+        "brainmaestro/composer-git-hooks": "^2.8",
+        "jetbrains/phpstorm-attributes": "^1.0",
+        "phpstan/extension-installer": "^1.1",
+        "phpstan/phpstan": "^1.8",
+        "phpstan/phpstan-symfony": "^1.2",
+        "spaze/phpstan-disallowed-calls": "^2.5"
+    },
+    "config": {
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": true,
+        "allow-plugins": {
+            "composer/package-versions-deprecated": true,
+            "symfony/flex": true,
+            "symfony/runtime": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "scripts": {
+        "phpstan": "vendor/bin/phpstan --ansi analyse --configuration phpstan.neon",
+        "post-install-cmd": [
+            "vendor/bin/cghooks add"
+        ],
+        "phpcs": "phpcs --standard=PSR12"
+    },
+    "conflict": {
+        "symfony/symfony": "*"
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": false,
+            "require": "6.1.*"
+        },
+        "hooks": {
+            "pre-commit": [
+                "./scripts/hooks/pre-commit.sh"
+            ]
+        }
     }
 }
